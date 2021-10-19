@@ -1,6 +1,7 @@
 import json
 from fastapi import FastAPI,HTTPException
-from auth.auth_handler import signJWT, get_password_hash
+from auth.auth_handler import signJWT, get_password_hash, verify_password
+from auth.helper import verify_login
 
 with open("menu.json", "r") as read_file:
     data = json.load(read_file)
@@ -64,3 +65,20 @@ async def new_user(username: str, password: str):
         json.dump(user_data, write_user_file)
     write_user_file.close()
     return signJWT(username)
+
+@app.post('/login')
+async def user_login(username: str, password: str):
+    db_password = "abc"
+    with open("user.json", "r") as read_user_file:
+        user_data = json.load(read_user_file)
+    for user in user_data:
+        if user['username'] == username:
+            db_password = user['password']
+    if db_password != "abc":
+        if verify_password(password, db_password):
+            return signJWT(username)
+        else:
+            return("Login gagal karena kesalahan username atau password")
+    else:
+        return("Login gagal karena kesalahan username atau password")
+    
