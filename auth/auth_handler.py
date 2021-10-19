@@ -4,8 +4,10 @@ from decouple import config
 import time
 from typing import Dict
 
-JWT_SECRET = config("kunci")
-JWT_ALGORITHM = config("algo")
+from passlib.context import CryptContext
+
+JWT_SECRET = config("secret")
+JWT_ALGORITHM = config("algorithm")
 
 def tokenresponse(token: str):
     return{
@@ -26,3 +28,24 @@ def decodeJWT(token: str) -> dict:
         return decoded_token if decoded_token["masaberlaku"] >= time.time() else None
     except:
         return {}
+
+password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(original_password, hashed_password):
+    return password_context.verify(original_password, hashed_password)
+
+def get_password_hash(password):
+    return password_context.hash(password)
+
+def get_user(db, username: str):
+    if username in db:
+        user_dict = db[username]
+        return UserInDB(**user_dict)
+        
+def authenticate_user(db, username: str, password: str):
+    user = get_user(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user

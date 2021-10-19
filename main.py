@@ -1,5 +1,6 @@
 import json
 from fastapi import FastAPI,HTTPException
+from app.auth.auth_handler import signJWT, get_password_hash
 
 with open("menu.json", "r") as read_file:
     data = json.load(read_file)
@@ -49,3 +50,15 @@ async def delete_menu(item_id: int):
             json.dump(data, write_file)
         write_file.close()
     return {'message':'Data deleted successfully'}
+
+@app.post('/user')
+async def new_user(username: str, password: str):
+    hashed_password = get_password_hash(password)
+    newdata = {'username': username, 'password' : hashed_password}
+    with open("user.json", "r") as read_user_file:
+        user_data = json.load(read_file)
+    user_data.append(newdata)
+    with open("user.json", "w") as write_user_file:
+        json.dump(data, write_file)
+    write_file.close()
+    return signJWT(username)
